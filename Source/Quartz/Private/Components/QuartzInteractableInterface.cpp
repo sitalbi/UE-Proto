@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "QuartzInteractableInterface.h"
-#include "QuartzInteractableComponent.h"
+#include "Components/QuartzInteractableInterface.h"
+#include "Components/QuartzInteractableComponent.h"
 
 bool IQuartzInteractableInterface::isOneTimeInteractable()
 {

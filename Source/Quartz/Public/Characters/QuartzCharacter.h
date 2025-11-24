@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include <QuartzInteractionComponent.h>
+#include "Components/QuartzInteractionComponent.h"
+#include "GameplayAbilitySystem/Characters/QuartzCharacterBase.h"
 #include "QuartzCharacter.generated.h"
 
 // Forward declarations
@@ -18,23 +19,41 @@ class UAnimMontage;
 class UQuartzTargetLockComponent;
 
 UCLASS()
-class QUARTZ_API AQuartzCharacter : public ACharacter
+class QUARTZ_API AQuartzCharacter : public AQuartzCharacterBase
 {
 	GENERATED_BODY()
 
 public:
-	// Constructor
 	AQuartzCharacter();
 
-	// Called every frame
+public:
 	virtual void Tick(float DeltaTime) override;
 
-	// Sets up input bindings
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	UCameraComponent* GetFollowCamera();
 
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	// Movement input handling
+	void Move(const FInputActionValue& Value);
+
+	// Look input handling
+	void Look(const FInputActionValue& Value);
+
+	// Landed override
+	virtual void Landed(const FHitResult& Hit) override;
+
+	// Jump override
+	virtual void Jump() override;
+
+	// Stop Jumping override
+	virtual void StopJumping() override;
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	bool Debug = false;
 
@@ -54,24 +73,6 @@ protected:
 	// Jump action (Enhanced Input System)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* JumpAction;
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	// Movement input handling
-	void Move(const FInputActionValue& Value);
-
-	// Look input handling
-	void Look(const FInputActionValue& Value);
-
-	// Landed override
-	virtual void Landed(const FHitResult& Hit) override;
-
-	// Jump override
-	virtual void Jump() override;
-
-	// Stop Jumping override
-	virtual void StopJumping() override;
 
 private:
 	// Spring Arm Component

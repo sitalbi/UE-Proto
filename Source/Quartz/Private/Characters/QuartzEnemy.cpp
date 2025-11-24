@@ -1,4 +1,4 @@
-#include "QuartzEnemy.h"
+#include "Characters/QuartzEnemy.h"
 
 
 AQuartzEnemy::AQuartzEnemy()

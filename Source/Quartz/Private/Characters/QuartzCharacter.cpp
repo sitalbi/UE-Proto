@@ -1,11 +1,11 @@
-#include "QuartzCharacter.h"
+#include "Characters/QuartzCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "DrawDebugHelpers.h"
-#include "QuartzTargetLockComponent.h"
+#include "Components/QuartzTargetLockComponent.h"
 
 // Constructor: Sets default values for this character
 AQuartzCharacter::AQuartzCharacter()

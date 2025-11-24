@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "QuartzInteractableInterface.h"
+#include "Components/QuartzInteractableInterface.h"
 #include "QuartzItemChest.generated.h"
 
 class USphereComponent;

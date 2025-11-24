@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "QuartzTargetLockComponent.h"
+#include "Components/QuartzTargetLockComponent.h"
 #include "GameFramework/Character.h"
 #include <EnhancedInputSubsystems.h>
 #include <EnhancedInputComponent.h>
-#include "QuartzEnemy.h"
+#include "Characters/QuartzEnemy.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include <QuartzCharacter.h>
+#include "Characters/QuartzCharacter.h"
 #include "Camera/CameraComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "DrawDebugHelpers.h"
