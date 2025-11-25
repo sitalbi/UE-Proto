@@ -6,6 +6,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Components/QuartzTargetLockComponent.h"
+#include "GameplayAbilitySystem/Abilities/GA_QuartzDash.h"
 
 // Constructor: Sets default values for this character
 AQuartzCharacter::AQuartzCharacter()
@@ -109,6 +110,16 @@ void AQuartzCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AQuartzCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AQuartzCharacter::StopJumping);
+
+		for (const FQuartzAbilityBind& Bind : DefaultAbilities)
+		{
+			if (Bind.InputAction && Bind.InputID != EQuartzAbilityInputID::None)
+			{
+				EnhancedInputComponent->BindAction(Bind.InputAction, ETriggerEvent::Started, this, &AQuartzCharacter::OnAbilityInputPressed, (int32)Bind.InputID);
+
+				EnhancedInputComponent->BindAction(Bind.InputAction, ETriggerEvent::Completed, this, &AQuartzCharacter::OnAbilityInputReleased, (int32)Bind.InputID);
+			}
+		}
 
 		if (auto IC = FindComponentByClass<UQuartzInteractionComponent>())
 		{

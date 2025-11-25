@@ -35,7 +35,6 @@ public:
 	UCameraComponent* GetFollowCamera();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	// Movement input handling
@@ -52,6 +51,8 @@ protected:
 
 	// Stop Jumping override
 	virtual void StopJumping() override;
+
+	void OnDashPressed(const FInputActionValue& Value);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
@@ -73,6 +74,10 @@ protected:
 	// Jump action (Enhanced Input System)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* JumpAction;
+
+	// Dash action (Enhanced Input System)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* DashAction;
 
 private:
 	// Spring Arm Component

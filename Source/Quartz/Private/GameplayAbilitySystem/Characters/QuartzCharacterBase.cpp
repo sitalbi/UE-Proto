@@ -2,6 +2,7 @@
 
 
 #include "GameplayAbilitySystem/Characters/QuartzCharacterBase.h"
+#include "GameplayAbilitySystem/Abilities/GA_QuartzDash.h"
 
 AQuartzCharacterBase::AQuartzCharacterBase()
 {
@@ -17,16 +18,26 @@ AQuartzCharacterBase::AQuartzCharacterBase()
 void AQuartzCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+    InitDefaultAbilities();
 }
 
-void AQuartzCharacterBase::PossessedBy(AController* NewController)
+void AQuartzCharacterBase::InitDefaultAbilities()
 {
-	Super::PossessedBy(NewController);
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	}
+    if (AbilitySystemComponent)
+    {
+        AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+        for (const FQuartzAbilityBind& Bind : DefaultAbilities)
+        {
+            if (Bind.Ability)
+            {
+                AbilitySystemComponent->GiveAbility(
+                    FGameplayAbilitySpec(Bind.Ability, 1, (int32)Bind.InputID, this)
+                );
+            }
+        }
+    }
 }
 
 void AQuartzCharacterBase::Tick(float DeltaTime)
@@ -44,5 +55,15 @@ void AQuartzCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 UAbilitySystemComponent* AQuartzCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void AQuartzCharacterBase::OnAbilityInputPressed(const FInputActionValue& Value, int32 InputID)
+{
+    AbilitySystemComponent->AbilityLocalInputPressed(InputID);
+}
+
+void AQuartzCharacterBase::OnAbilityInputReleased(const FInputActionValue& Value, int32 InputID)
+{
+    AbilitySystemComponent->AbilityLocalInputReleased(InputID);
 }
 

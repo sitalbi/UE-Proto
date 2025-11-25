@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include <GameplayAbilitySystem/QuartzAbilityInputTypes.h>
 #include "QuartzCharacterBase.generated.h"
 
 
@@ -20,7 +21,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	virtual void PossessedBy(AController* NewController) override;
+	void InitDefaultAbilities();
 
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -29,15 +30,16 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
+	void OnAbilityInputPressed(const FInputActionValue& Value, int32 InputID);
+	void OnAbilityInputReleased(const FInputActionValue& Value, int32 InputID);
 
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	UAbilitySystemComponent* AbilitySystemComponent;
 
-protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	TArray<FQuartzAbilityBind> DefaultAbilities;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilitySystem")
-	EGameplayEffectReplicationMode ReplicationMode;
 };
 

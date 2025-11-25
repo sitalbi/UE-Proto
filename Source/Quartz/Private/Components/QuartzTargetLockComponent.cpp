@@ -262,9 +262,6 @@ void UQuartzTargetLockComponent::UpdateTargetLock()
 
 			// Set the rotation of the camera
 			OwningCharacter->GetController()->SetControlRotation(newRotation);
-
-			APlayerController* PlayerController = OwningCharacter->GetController<APlayerController>();
-
 		}
 	}
 }
@@ -317,6 +314,8 @@ void UQuartzTargetLockComponent::ChangeTargetActor(AActor* newTarget)
 	{
 		bIsLockedOn = true;
 		SetLockTimer(true);
+		OwningCharacter->bUseControllerRotationYaw = true;
+		OwningCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 		OnLockTarget();
 	}
 	else
