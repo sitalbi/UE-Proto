@@ -34,10 +34,33 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
     {
         WorldDir = Character->GetActorForwardVector();
     }
+    WorldDir.Z = 0.f;
+    WorldDir.Normalize();
 
     FVector LocalDir = Character->GetActorRotation().UnrotateVector(WorldDir);
     LocalDir.Z = 0.0f;
     LocalDir.Normalize();
+
+    float MaxSpeed = Character->GetCharacterMovement()->GetMaxSpeed();
+
+    // Root-motion-from-code dash
+    UAbilityTask_ApplyRootMotionConstantForce* DashTask =
+        UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
+            this,
+            NAME_None,
+            WorldDir,
+            DashStrength,
+            DashDuration,
+            false,
+            nullptr,
+            ERootMotionFinishVelocityMode::ClampVelocity,
+            FVector::ZeroVector,
+            MaxSpeed,
+            false
+        );
+
+    DashTask->OnFinish.AddDynamic(this, &UGA_QuartzDash::OnDashFinished);
+    DashTask->ReadyForActivation();
 
     // Choose section based on direction
     FName SectionName = NAME_None;
@@ -45,33 +68,31 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
     float X = LocalDir.X;
     float Y = LocalDir.Y;
 
-    if (X > 0.5f && FMath::Abs(Y) < 0.4f)                     SectionName = "Dash_F";   
-    else if (X < -0.5f && FMath::Abs(Y) < 0.4f)               SectionName = "Dash_B";   
-    else if (Y > 0.5f && FMath::Abs(X) < 0.4f)                SectionName = "Dash_R";   
-    else if (Y < -0.5f && FMath::Abs(X) < 0.4f)               SectionName = "Dash_L";   
+    if (X > 0.5f && FMath::Abs(Y) < 0.4f)          SectionName = "Dash_F";   
+    else if (X < -0.5f && FMath::Abs(Y) < 0.4f)    SectionName = "Dash_B";   
+    else if (Y > 0.5f && FMath::Abs(X) < 0.4f)     SectionName = "Dash_R";   
+    else if (Y < -0.5f && FMath::Abs(X) < 0.4f)    SectionName = "Dash_L";   
 
-    else if (X > 0.5f && Y > 0.5f)                            SectionName = "Dash_FR";  
-    else if (X > 0.5f && Y < -0.5f)                           SectionName = "Dash_FL";  
-    else if (X < -0.5f && Y > 0.5f)                           SectionName = "Dash_BR";  
-    else if (X < -0.5f && Y < -0.5f)                          SectionName = "Dash_BL";  
+    else if (X > 0.5f && Y > 0.5f)                 SectionName = "Dash_FR";  
+    else if (X > 0.5f && Y < -0.5f)                SectionName = "Dash_FL";  
+    else if (X < -0.5f && Y > 0.5f)                SectionName = "Dash_BR";  
+    else if (X < -0.5f && Y < -0.5f)               SectionName = "Dash_BL";  
 
-    else                                                      SectionName = "Dash_F"; 
+    else                                           SectionName = "Dash_F"; 
 
     // Play Montage + jump to correct section
-    UAbilityTask_PlayMontageAndWait* MontageTask =
+    if (DashMontage)
+    {
         UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
             this,
             NAME_None,
             DashMontage,
-            1.0f,
+            1.f,
             SectionName,
-            false
-        );
-
-    MontageTask->OnCompleted.AddDynamic(this, &UGA_QuartzDash::OnDashFinished);
-    MontageTask->OnInterrupted.AddDynamic(this, &UGA_QuartzDash::OnDashFinished);
-    MontageTask->OnCancelled.AddDynamic(this, &UGA_QuartzDash::OnDashFinished);
-    MontageTask->ReadyForActivation();
+            true
+        )->ReadyForActivation();
+    }
+    
 }
 
 void UGA_QuartzDash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

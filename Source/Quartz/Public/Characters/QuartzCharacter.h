@@ -52,7 +52,9 @@ protected:
 	// Stop Jumping override
 	virtual void StopJumping() override;
 
-	void OnDashPressed(const FInputActionValue& Value);
+	void Dash();
+
+	void EquipWeapon();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
@@ -79,6 +81,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* DashAction;
 
+	// Equip action (Enhanced Input System)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* EquipAction;
+
+	// Equip anim montage
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	UAnimMontage* EquipMontage;
+
 private:
 	// Spring Arm Component
 	UPROPERTY(VisibleAnywhere)
@@ -92,4 +102,6 @@ private:
 	TObjectPtr<UQuartzTargetLockComponent> TargetLockComp;
 
 	float DefaultSpeed = 600.0f;
+
+	bool isEquipped = false;
 };

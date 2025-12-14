@@ -35,8 +35,22 @@ protected:
 	UFUNCTION()
 	void OnDashFinished();
 
+
+
+
 public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	UAnimMontage* DashMontage;
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashStrength = 1800.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float DashDuration = 0.25f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	float BrakingFrictionDuringDash = 0.f;
 };

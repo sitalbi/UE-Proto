@@ -28,12 +28,12 @@ void AQuartzCharacterBase::InitDefaultAbilities()
     {
         AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
-        for (const FQuartzAbilityBind& Bind : DefaultAbilities)
+        for (auto AbilityClass : DefaultAbilities)
         {
-            if (Bind.Ability)
+            if (AbilityClass)
             {
                 AbilitySystemComponent->GiveAbility(
-                    FGameplayAbilitySpec(Bind.Ability, 1, (int32)Bind.InputID, this)
+                    FGameplayAbilitySpec(AbilityClass, 1)
                 );
             }
         }

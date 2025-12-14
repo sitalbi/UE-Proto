@@ -7,6 +7,7 @@
 #include "DrawDebugHelpers.h"
 #include "Components/QuartzTargetLockComponent.h"
 #include "GameplayAbilitySystem/Abilities/GA_QuartzDash.h"
+#include "QuartzGameplayTags.h"
 
 // Constructor: Sets default values for this character
 AQuartzCharacter::AQuartzCharacter()
@@ -76,6 +77,10 @@ void AQuartzCharacter::Move(const FInputActionValue& Value)
 
 void AQuartzCharacter::Look(const FInputActionValue& Value)
 {
+	if (TargetLockComp && TargetLockComp->IsLockedOn())
+	{
+		return;
+	}
 	const FVector2D LookAxisValue = Value.Get<FVector2D>();
 	AddControllerYawInput(LookAxisValue.X);
 	AddControllerPitchInput(LookAxisValue.Y);
@@ -96,6 +101,49 @@ void AQuartzCharacter::StopJumping()
 	Super::StopJumping();
 }
 
+void AQuartzCharacter::Dash()
+{
+	if (!AbilitySystemComponent)
+		return;
+
+	FGameplayTagContainer DashTagContainer;
+	DashTagContainer.AddTag(QuartzTags::Ability_Dash);
+
+	AbilitySystemComponent->TryActivateAbilitiesByTag(DashTagContainer);
+}
+
+void AQuartzCharacter::EquipWeapon()
+{
+	FGameplayTag Tag = FGameplayTag::RequestGameplayTag("State.Weapon.Equip");
+	FName SectionName = FName("Equip");
+	bool bUnequip = AbilitySystemComponent->HasMatchingGameplayTag(Tag);
+	if(bUnequip)
+	{
+		SectionName = FName("Unequip");
+	}
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance) return;
+
+	AnimInstance->Montage_Play(EquipMontage);
+	AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
+
+	FOnMontageBlendedInEnded EndDelegate;
+	EndDelegate.BindLambda([this, bUnequip, Tag](UAnimMontage* Montage)
+		{
+
+			if (bUnequip)
+			{
+				AbilitySystemComponent->RemoveLooseGameplayTag(Tag);
+			}
+			else
+			{
+				AbilitySystemComponent->AddLooseGameplayTag(Tag);
+			}
+		});
+
+	AnimInstance->Montage_SetBlendedInDelegate(EndDelegate, EquipMontage);
+}
 
 // Sets up input bindings for this character
 void AQuartzCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -111,15 +159,9 @@ void AQuartzCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AQuartzCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AQuartzCharacter::StopJumping);
 
-		for (const FQuartzAbilityBind& Bind : DefaultAbilities)
-		{
-			if (Bind.InputAction && Bind.InputID != EQuartzAbilityInputID::None)
-			{
-				EnhancedInputComponent->BindAction(Bind.InputAction, ETriggerEvent::Started, this, &AQuartzCharacter::OnAbilityInputPressed, (int32)Bind.InputID);
+		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AQuartzCharacter::Dash);
 
-				EnhancedInputComponent->BindAction(Bind.InputAction, ETriggerEvent::Completed, this, &AQuartzCharacter::OnAbilityInputReleased, (int32)Bind.InputID);
-			}
-		}
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AQuartzCharacter::EquipWeapon);
 
 		if (auto IC = FindComponentByClass<UQuartzInteractionComponent>())
 		{
