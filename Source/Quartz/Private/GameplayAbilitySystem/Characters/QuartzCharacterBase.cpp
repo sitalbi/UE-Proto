@@ -57,13 +57,4 @@ UAbilitySystemComponent* AQuartzCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AQuartzCharacterBase::OnAbilityInputPressed(const FInputActionValue& Value, int32 InputID)
-{
-    AbilitySystemComponent->AbilityLocalInputPressed(InputID);
-}
-
-void AQuartzCharacterBase::OnAbilityInputReleased(const FInputActionValue& Value, int32 InputID)
-{
-    AbilitySystemComponent->AbilityLocalInputReleased(InputID);
-}
 

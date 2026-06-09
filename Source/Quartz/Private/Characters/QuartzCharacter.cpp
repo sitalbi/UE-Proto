@@ -58,6 +58,11 @@ void AQuartzCharacter::BeginPlay()
 
 void AQuartzCharacter::Move(const FInputActionValue& Value)
 {
+	if (AbilitySystemComponent &&
+		AbilitySystemComponent->HasMatchingGameplayTag(QuartzTags::State_Dashing))
+	{
+		return; // movement blocked
+	}
 	// Get movement input as a 2D vector
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -107,7 +112,7 @@ void AQuartzCharacter::Dash()
 		return;
 
 	FGameplayTagContainer DashTagContainer;
-	DashTagContainer.AddTag(QuartzTags::Ability_Dash);
+	DashTagContainer.AddTag(QuartzTags::Input_Dash);
 
 	AbilitySystemComponent->TryActivateAbilitiesByTag(DashTagContainer);
 }
@@ -128,21 +133,55 @@ void AQuartzCharacter::EquipWeapon()
 	AnimInstance->Montage_Play(EquipMontage);
 	AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
 
-	FOnMontageBlendedInEnded EndDelegate;
-	EndDelegate.BindLambda([this, bUnequip, Tag](UAnimMontage* Montage)
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindLambda([this, bUnequip, Tag](UAnimMontage* Montage, bool bInterrupted)
 		{
+			if (bInterrupted || !AbilitySystemComponent || !WeaponData)
+			{
+				return;
+			}
 
 			if (bUnequip)
 			{
+				for (FGameplayAbilitySpecHandle Handle : WeaponAbilityHandles)
+				{
+					AbilitySystemComponent->ClearAbility(Handle);
+				}
+
+				WeaponAbilityHandles.Empty();
+
 				AbilitySystemComponent->RemoveLooseGameplayTag(Tag);
+				AbilitySystemComponent->RemoveLooseGameplayTag(WeaponData->WeaponTag);
 			}
 			else
 			{
+
 				AbilitySystemComponent->AddLooseGameplayTag(Tag);
+
+				for (TSubclassOf<UGameplayAbility> AbilityClass : WeaponData->GrantedAbilities)
+				{
+					if (!AbilityClass) continue;
+
+					FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1));
+
+					WeaponAbilityHandles.Add(Handle);
+				}
+
+				AbilitySystemComponent->AddLooseGameplayTag(WeaponData->WeaponTag);
 			}
 		});
 
-	AnimInstance->Montage_SetBlendedInDelegate(EndDelegate, EquipMontage);
+	AnimInstance->Montage_SetEndDelegate(EndDelegate, EquipMontage);
+}
+
+void AQuartzCharacter::LightAttack()
+{
+	if (!AbilitySystemComponent)
+		return;
+
+	FGameplayTagContainer LightAttackTags;
+	LightAttackTags.AddTag(QuartzTags::Input_Attack_Light);
+	AbilitySystemComponent->TryActivateAbilitiesByTag(LightAttackTags);
 }
 
 // Sets up input bindings for this character
@@ -162,6 +201,8 @@ void AQuartzCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Started, this, &AQuartzCharacter::Dash);
 
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AQuartzCharacter::EquipWeapon);
+
+		EnhancedInputComponent->BindAction(LightAttackAction, ETriggerEvent::Started, this, &AQuartzCharacter::LightAttack);
 
 		if (auto IC = FindComponentByClass<UQuartzInteractionComponent>())
 		{

@@ -22,7 +22,4 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     FGameplayTag WeaponTag;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-    UAnimMontage* LightAttackMontage;
 };

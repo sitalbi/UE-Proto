@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Components/QuartzInteractionComponent.h"
 #include "GameplayAbilitySystem/Characters/QuartzCharacterBase.h"
+#include <QuartzWeaponData.h>
 #include "QuartzCharacter.generated.h"
 
 // Forward declarations
@@ -56,9 +57,14 @@ protected:
 
 	void EquipWeapon();
 
+	void LightAttack();
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
 	bool Debug = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<UQuartzWeaponData> WeaponData;
 
 protected:
 	// Input Mapping Context (Enhanced Input System)
@@ -85,6 +91,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* EquipAction;
 
+	// Equip action (Enhanced Input System)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* LightAttackAction;
+
 	// Equip anim montage
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	UAnimMontage* EquipMontage;
@@ -100,6 +110,9 @@ private:
 
 	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UQuartzTargetLockComponent> TargetLockComp;
+
+	UPROPERTY()
+	TArray<FGameplayAbilitySpecHandle> WeaponAbilityHandles;
 
 	float DefaultSpeed = 600.0f;
 

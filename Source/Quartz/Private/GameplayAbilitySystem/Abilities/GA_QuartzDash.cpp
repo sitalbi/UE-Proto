@@ -12,7 +12,10 @@ UGA_QuartzDash::UGA_QuartzDash()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor; 
 	
-	AbilityTags.AddTag(QuartzTags::Ability_Dash);
+	AbilityTags.AddTag(QuartzTags::Ability_Dash); 
+	AbilityTags.AddTag(QuartzTags::Input_Dash); 
+
+    ActivationOwnedTags.AddTag(QuartzTags::State_Dashing);
 }
 
 void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -43,7 +46,6 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
 
     float MaxSpeed = Character->GetCharacterMovement()->GetMaxSpeed();
 
-    // Root-motion-from-code dash
     UAbilityTask_ApplyRootMotionConstantForce* DashTask =
         UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
             this,
@@ -80,14 +82,19 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
 
     else                                           SectionName = "Dash_F"; 
 
+    
     // Play Montage + jump to correct section
     if (DashMontage)
     {
+        // Adjust the montage playrate to the dash duration
+        float SectionLength = DashMontage->GetSectionLength(DashMontage->GetSectionIndex(SectionName));
+        float PlayRate = SectionLength / DashDuration;
+
         UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
             this,
             NAME_None,
             DashMontage,
-            1.f,
+            PlayRate,
             SectionName,
             true
         )->ReadyForActivation();

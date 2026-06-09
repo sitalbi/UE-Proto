@@ -30,9 +30,6 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
-	void OnAbilityInputPressed(const FInputActionValue& Value, int32 InputID);
-	void OnAbilityInputReleased(const FInputActionValue& Value, int32 InputID);
-
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
