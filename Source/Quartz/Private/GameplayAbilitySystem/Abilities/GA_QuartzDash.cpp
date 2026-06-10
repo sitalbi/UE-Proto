@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <Abilities/Tasks/AbilityTask_PlayMontageAndWait.h>
+#include "AbilitySystemComponent.h"
 
 UGA_QuartzDash::UGA_QuartzDash()
 {
@@ -82,18 +83,20 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
 
     else                                           SectionName = "Dash_F"; 
 
-    
+    const bool bWeaponEquipped = GetAbilitySystemComponentFromActorInfo() && GetAbilitySystemComponentFromActorInfo()->HasMatchingGameplayTag(QuartzTags::State_Weapon_Equipped);
+
+    UAnimMontage* Montage = bWeaponEquipped ? DashCombatMontage : DashMontage;
     // Play Montage + jump to correct section
-    if (DashMontage)
+    if (Montage)
     {
         // Adjust the montage playrate to the dash duration
-        float SectionLength = DashMontage->GetSectionLength(DashMontage->GetSectionIndex(SectionName));
+        float SectionLength = Montage->GetSectionLength(DashMontage->GetSectionIndex(SectionName));
         float PlayRate = SectionLength / DashDuration;
 
         UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
             this,
             NAME_None,
-            DashMontage,
+            Montage,
             PlayRate,
             SectionName,
             true

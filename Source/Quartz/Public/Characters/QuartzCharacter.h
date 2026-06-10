@@ -35,6 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	UCameraComponent* GetFollowCamera();
 
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void AttachWeapon(bool bEquip);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -65,6 +69,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<UQuartzWeaponData> WeaponData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	FName WeaponHandSocket;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	FName WeaponSheathSocket;
 
 protected:
 	// Input Mapping Context (Enhanced Input System)
@@ -99,6 +109,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
 	UAnimMontage* EquipMontage;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> WeaponMeshComp;
+
 private:
 	// Spring Arm Component
 	UPROPERTY(VisibleAnywhere)
@@ -113,6 +126,9 @@ private:
 
 	UPROPERTY()
 	TArray<FGameplayAbilitySpecHandle> WeaponAbilityHandles;
+
+	UPROPERTY()
+	FGameplayTag EquipTag;
 
 	float DefaultSpeed = 600.0f;
 

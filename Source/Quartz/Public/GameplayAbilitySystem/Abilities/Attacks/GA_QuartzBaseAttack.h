@@ -35,10 +35,32 @@ protected:
 	UFUNCTION()
 	void OnMontageFinished();
 
-public:
+	UFUNCTION()
+	void OnComboInputEvent(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnComboWindowOpenEvent(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnComboWindowCloseEvent(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnComboCommitEvent(FGameplayEventData Payload);
 
 public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo")
+	FGameplayTag ComboInputEventTag;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo")
+	TArray<FName> AnimMontageComboSections;
+
+protected:
+	bool bComboWindowOpen = false;
+	bool bQueuedNextCombo = false;
+
+	int CurrentComboIndex = 0;
 };

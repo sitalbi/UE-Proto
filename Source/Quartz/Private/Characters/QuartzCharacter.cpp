@@ -28,7 +28,6 @@ AQuartzCharacter::AQuartzCharacter()
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character faces movement direction
 	bUseControllerRotationYaw = false; // Disable yaw rotation based on controller
-
 }
 
 void AQuartzCharacter::Tick(float DeltaTime)
@@ -54,6 +53,15 @@ void AQuartzCharacter::BeginPlay()
 
 	// Initialize the Target Lock Component
 	TargetLockComp = FindComponentByClass<UQuartzTargetLockComponent>();
+
+	WeaponMeshComp = Cast<UStaticMeshComponent>(GetDefaultSubobjectByName(TEXT("WeaponMesh")));
+
+	if (!WeaponMeshComp)
+	{
+		UE_LOG(LogTemp, Error, TEXT("WeaponMeshComp not found"));
+	}
+
+	EquipTag = QuartzTags::State_Weapon_Equipped;
 }
 
 void AQuartzCharacter::Move(const FInputActionValue& Value)
@@ -119,9 +127,8 @@ void AQuartzCharacter::Dash()
 
 void AQuartzCharacter::EquipWeapon()
 {
-	FGameplayTag Tag = FGameplayTag::RequestGameplayTag("State.Weapon.Equip");
 	FName SectionName = FName("Equip");
-	bool bUnequip = AbilitySystemComponent->HasMatchingGameplayTag(Tag);
+	bool bUnequip = AbilitySystemComponent->HasMatchingGameplayTag(EquipTag);
 	if(bUnequip)
 	{
 		SectionName = FName("Unequip");
@@ -132,52 +139,23 @@ void AQuartzCharacter::EquipWeapon()
 
 	AnimInstance->Montage_Play(EquipMontage);
 	AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
-
-	FOnMontageEnded EndDelegate;
-	EndDelegate.BindLambda([this, bUnequip, Tag](UAnimMontage* Montage, bool bInterrupted)
-		{
-			if (bInterrupted || !AbilitySystemComponent || !WeaponData)
-			{
-				return;
-			}
-
-			if (bUnequip)
-			{
-				for (FGameplayAbilitySpecHandle Handle : WeaponAbilityHandles)
-				{
-					AbilitySystemComponent->ClearAbility(Handle);
-				}
-
-				WeaponAbilityHandles.Empty();
-
-				AbilitySystemComponent->RemoveLooseGameplayTag(Tag);
-				AbilitySystemComponent->RemoveLooseGameplayTag(WeaponData->WeaponTag);
-			}
-			else
-			{
-
-				AbilitySystemComponent->AddLooseGameplayTag(Tag);
-
-				for (TSubclassOf<UGameplayAbility> AbilityClass : WeaponData->GrantedAbilities)
-				{
-					if (!AbilityClass) continue;
-
-					FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1));
-
-					WeaponAbilityHandles.Add(Handle);
-				}
-
-				AbilitySystemComponent->AddLooseGameplayTag(WeaponData->WeaponTag);
-			}
-		});
-
-	AnimInstance->Montage_SetEndDelegate(EndDelegate, EquipMontage);
 }
 
 void AQuartzCharacter::LightAttack()
 {
 	if (!AbilitySystemComponent)
 		return;
+
+	FGameplayEventData EventInputLightAttack;
+	EventInputLightAttack.EventTag = QuartzTags::Event_Input_LightAttack;
+	EventInputLightAttack.Instigator = this;
+	EventInputLightAttack.Target = this;
+
+	AbilitySystemComponent->HandleGameplayEvent(
+		QuartzTags::Event_Input_LightAttack,
+		&EventInputLightAttack
+	);
+
 
 	FGameplayTagContainer LightAttackTags;
 	LightAttackTags.AddTag(QuartzTags::Input_Attack_Light);
@@ -219,5 +197,66 @@ void AQuartzCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 UCameraComponent* AQuartzCharacter::GetFollowCamera()
 {
 	return CameraComp;
+}
+
+void AQuartzCharacter::AttachWeapon(bool bEquip)
+{
+	if (!AbilitySystemComponent || !WeaponData)
+	{
+		return;
+	}
+
+	if (!bEquip)
+	{
+		if (!WeaponMeshComp) return;
+
+		/*WeaponMeshComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+
+		WeaponMeshComp->AttachToComponent(
+			GetMesh(),
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			WeaponSheathSocket
+		);
+		WeaponMeshComp->SetRelativeTransform(FTransform::Identity);*/
+
+		AbilitySystemComponent->RemoveLooseGameplayTag(EquipTag);
+		AbilitySystemComponent->RemoveLooseGameplayTag(WeaponData->WeaponTag);
+
+		for (FGameplayAbilitySpecHandle Handle : WeaponAbilityHandles)
+		{
+			AbilitySystemComponent->ClearAbility(Handle);
+		}
+
+		WeaponAbilityHandles.Empty();
+	}
+	else
+	{
+		if (!WeaponMeshComp) {
+
+			return;
+		}
+
+		/*WeaponMeshComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+
+		WeaponMeshComp->AttachToComponent(
+			GetMesh(),
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			WeaponHandSocket
+		);
+		FTransform transform = FTransform(FRotator(-90.0, 0, 180), FVector(-8.0,0,0));
+		WeaponMeshComp->SetRelativeTransform(transform);*/
+
+		AbilitySystemComponent->AddLooseGameplayTag(EquipTag);
+		AbilitySystemComponent->AddLooseGameplayTag(WeaponData->WeaponTag);
+
+		for (TSubclassOf<UGameplayAbility> AbilityClass : WeaponData->GrantedAbilities)
+		{
+			if (!AbilityClass) continue;
+
+			FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1));
+
+			WeaponAbilityHandles.Add(Handle);
+		}
+	}
 }
 
