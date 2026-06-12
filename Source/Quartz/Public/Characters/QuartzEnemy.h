@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "GameplayAbilitySystem/Characters/QuartzCharacterBase.h"
 #include "QuartzEnemy.generated.h"
 
 UCLASS()
-class QUARTZ_API AQuartzEnemy : public APawn
+class QUARTZ_API AQuartzEnemy : public AQuartzCharacterBase
 {
 	GENERATED_BODY()
 
@@ -23,9 +23,6 @@ protected:
 public:	
 
 	virtual void Tick(float DeltaTime) override;
-
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	bool IsDead() const;
 

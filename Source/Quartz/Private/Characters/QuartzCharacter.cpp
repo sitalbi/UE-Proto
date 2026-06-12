@@ -208,16 +208,6 @@ void AQuartzCharacter::AttachWeapon(bool bEquip)
 
 	if (!bEquip)
 	{
-		if (!WeaponMeshComp) return;
-
-		/*WeaponMeshComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-
-		WeaponMeshComp->AttachToComponent(
-			GetMesh(),
-			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-			WeaponSheathSocket
-		);
-		WeaponMeshComp->SetRelativeTransform(FTransform::Identity);*/
 
 		AbilitySystemComponent->RemoveLooseGameplayTag(EquipTag);
 		AbilitySystemComponent->RemoveLooseGameplayTag(WeaponData->WeaponTag);
@@ -231,20 +221,6 @@ void AQuartzCharacter::AttachWeapon(bool bEquip)
 	}
 	else
 	{
-		if (!WeaponMeshComp) {
-
-			return;
-		}
-
-		/*WeaponMeshComp->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-
-		WeaponMeshComp->AttachToComponent(
-			GetMesh(),
-			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-			WeaponHandSocket
-		);
-		FTransform transform = FTransform(FRotator(-90.0, 0, 180), FVector(-8.0,0,0));
-		WeaponMeshComp->SetRelativeTransform(transform);*/
 
 		AbilitySystemComponent->AddLooseGameplayTag(EquipTag);
 		AbilitySystemComponent->AddLooseGameplayTag(WeaponData->WeaponTag);

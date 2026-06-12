@@ -19,6 +19,8 @@ public:
 
 protected:
 
+	void ApplyDamageToActor(AActor* TargetActor);
+
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
@@ -46,6 +48,9 @@ protected:
 
 	UFUNCTION()
 	void OnComboCommitEvent(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void OnAttackHitEvent(FGameplayEventData Payload);
 
 public:
 

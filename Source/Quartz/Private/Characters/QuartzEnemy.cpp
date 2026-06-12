@@ -21,13 +21,6 @@ void AQuartzEnemy::Tick(float DeltaTime)
 
 }
 
-
-void AQuartzEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-
 bool AQuartzEnemy::IsDead() const
 {
 	return false;

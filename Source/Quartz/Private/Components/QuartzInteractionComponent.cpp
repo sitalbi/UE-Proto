@@ -33,7 +33,6 @@ void UQuartzInteractionComponent::BeginPlay()
 
 void UQuartzInteractionComponent::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnOverlapEnter"));
 	TScriptInterface<IQuartzInteractableInterface> Intf(OtherActor);
 	if (OtherActor && OtherActor != GetOwner() && Intf)
 	{
@@ -44,7 +43,6 @@ void UQuartzInteractionComponent::OnOverlapBegin(UPrimitiveComponent* Overlapped
 
 void UQuartzInteractionComponent::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnOverlapEnd"));
 	TScriptInterface<IQuartzInteractableInterface> Intf(OtherActor);
 	if (OtherActor && OtherActor != GetOwner() && Intf)
 	{
@@ -55,10 +53,8 @@ void UQuartzInteractionComponent::OnOverlapEnd(UPrimitiveComponent* OverlappedCo
 
 void UQuartzInteractionComponent::Interact()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Interact Pressed"));
 	if (OverlappingInteractables.Num() > 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("OverlappingInteractables non nul"));
 		TScriptInterface<IQuartzInteractableInterface> Interactable = OverlappingInteractables[0];
 		bool bDisablePostInteraction = IQuartzInteractableInterface::Execute_Interact(Interactable.GetObject(), Cast<ACharacter>(GetOwner()));
 

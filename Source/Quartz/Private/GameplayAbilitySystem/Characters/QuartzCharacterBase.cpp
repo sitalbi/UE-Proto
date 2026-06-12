@@ -12,6 +12,8 @@ AQuartzCharacterBase::AQuartzCharacterBase()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(false);
 
+    HealthSet = CreateDefaultSubobject<UQuartzHealthAttributeSet>(TEXT("HealthAttributeSet"));
+
 }
 
 
@@ -43,12 +45,6 @@ void AQuartzCharacterBase::InitDefaultAbilities()
 void AQuartzCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-}
-
-void AQuartzCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 

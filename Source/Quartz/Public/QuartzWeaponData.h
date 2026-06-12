@@ -22,4 +22,10 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     FGameplayTag WeaponTag;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")
+    TSubclassOf<UGameplayEffect> DamageEffectClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Damage")
+    float BaseDamage = 10.f;
 };

@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
 #include <GameplayAbilitySystem/QuartzAbilityInputTypes.h>
+#include <GameplayAbilitySystem/AttributeSets/QuartzHealthAttributeSet.h>
 #include "QuartzCharacterBase.generated.h"
 
 
@@ -26,8 +27,6 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 public:
@@ -38,5 +37,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem | Health")
+	TObjectPtr<UQuartzHealthAttributeSet> HealthSet;
 };
 

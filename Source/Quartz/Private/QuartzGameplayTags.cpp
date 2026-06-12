@@ -15,6 +15,10 @@ UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Event_Input_LightAttack, "Event.Input.Attack.
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Event_Combo_Window_Open, "Event.Combo.Window.Open");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Event_Combo_Window_Close, "Event.Combo.Window.Close");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Event_Combo_Commit, "Event.Combo.Commit");
+UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Event_Attack_Hit, "Event.Attack.Hit");
+
+UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Data_Damage, "GameplayAbilities.Data.Damage");
+UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Data_DashCooldown, "GameplayAbilities.Data.DashCooldown");
 
 
 
