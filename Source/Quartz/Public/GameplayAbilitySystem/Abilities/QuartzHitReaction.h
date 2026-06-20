@@ -4,22 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "GA_QuartzBaseAttack.generated.h"
+#include <Abilities/Tasks/AbilityTask_PlayMontageAndWait.h>
+#include "QuartzHitReaction.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUARTZ_API UGA_QuartzBaseAttack : public UGameplayAbility
+class QUARTZ_API UQuartzHitReaction : public UGameplayAbility
 {
 	GENERATED_BODY()
-	
+
 public:
-	UGA_QuartzBaseAttack();
-
+	UQuartzHitReaction();
+	
 protected:
-
-	void ApplyDamageToActor(AActor* TargetActor);
 
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -38,34 +37,22 @@ protected:
 	void OnMontageFinished();
 
 	UFUNCTION()
-	void OnComboInputEvent(FGameplayEventData Payload);
+	void SetupHitReactEventListener();
 
 	UFUNCTION()
-	void OnComboWindowOpenEvent(FGameplayEventData Payload);
+	void PlayHitReactionFromEvent(const FGameplayEventData& Payload);
 
 	UFUNCTION()
-	void OnComboWindowCloseEvent(FGameplayEventData Payload);
+	void OnHitReactEvent(FGameplayEventData Payload);
 
-	UFUNCTION()
-	void OnComboCommitEvent(FGameplayEventData Payload);
-
-	UFUNCTION()
-	void OnAttackHitEvent(FGameplayEventData Payload);
 
 public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	UAnimMontage* AttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo")
-	FGameplayTag ComboInputEventTag;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combo")
-	TArray<FName> AnimMontageComboSections;
+	UAnimMontage* HitMontage;
 
 protected:
-	bool bComboWindowOpen = false;
-	bool bQueuedNextCombo = false;
 
-	int CurrentComboIndex = 0;
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
 };

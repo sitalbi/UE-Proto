@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include <Characters/QuartzPlayerCharacter.h>
 #include "QuartzTargetLockComponent.generated.h"
 
 class UInputAction;
 struct FInputActionValue;
-class AQuartzCharacter;
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class QUARTZ_API UQuartzTargetLockComponent : public UActorComponent
@@ -50,7 +50,7 @@ protected:
 	TSubclassOf<AActor>lockOnClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	AQuartzCharacter* OwningCharacter;
+	AQuartzPlayerCharacter* OwningCharacter;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	AActor* targetActor;

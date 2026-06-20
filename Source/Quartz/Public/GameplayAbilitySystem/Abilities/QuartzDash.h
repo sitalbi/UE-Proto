@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "GA_QuartzDash.generated.h"
+#include "QuartzDash.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUARTZ_API UGA_QuartzDash : public UGameplayAbility
+class QUARTZ_API UQuartzDash : public UGameplayAbility
 {
 	GENERATED_BODY()
 	
 public:
-	UGA_QuartzDash();
+	UQuartzDash();
 
 protected:
 

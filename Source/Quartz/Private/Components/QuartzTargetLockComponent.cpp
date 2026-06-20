@@ -7,7 +7,6 @@
 #include <EnhancedInputComponent.h>
 #include "Characters/QuartzEnemy.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Characters/QuartzCharacter.h"
 #include "Camera/CameraComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "DrawDebugHelpers.h"
@@ -32,7 +31,7 @@ void UQuartzTargetLockComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwningCharacter = Cast<AQuartzCharacter>(GetOwner());
+	OwningCharacter = Cast<AQuartzPlayerCharacter>(GetOwner());
 }
 
 void UQuartzTargetLockComponent::LockOnTarget(const FInputActionValue& Value)

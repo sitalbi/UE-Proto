@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameplayAbilitySystem/Abilities/Attacks/GA_QuartzBaseAttack.h"
+#include "GameplayAbilitySystem/Abilities/Attacks/QuartzBaseAttack.h"
 #include "QuartzGameplayTags.h"
 #include <Abilities/Tasks/AbilityTask_PlayMontageAndWait.h>
 #include "GameFramework/Character.h"
@@ -9,9 +9,10 @@
 #include <Abilities/Tasks/AbilityTask_WaitGameplayEvent.h>
 #include <AbilitySystemInterface.h>
 #include <AbilitySystemComponent.h>
-#include <Characters/QuartzCharacter.h>
+#include <Characters/QuartzPlayerCharacter.h>
+#include <AbilitySystemBlueprintLibrary.h>
 
-UGA_QuartzBaseAttack::UGA_QuartzBaseAttack()
+UQuartzBaseAttack::UQuartzBaseAttack()
 {
     InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 
@@ -21,11 +22,11 @@ UGA_QuartzBaseAttack::UGA_QuartzBaseAttack()
     ActivationOwnedTags.AddTag(QuartzTags::State_Attacking);
 }
 
-void UGA_QuartzBaseAttack::ApplyDamageToActor(AActor* TargetActor)
+void UQuartzBaseAttack::ApplyDamageToActor(AActor* TargetActor)
 {
     UE_LOG(LogTemp, Warning, TEXT("ApplyDamageToActor called. Target=%s"), *GetNameSafe(TargetActor));
 
-    AQuartzCharacter* Character = Cast<AQuartzCharacter>(GetAvatarActorFromActorInfo());
+    AQuartzPlayerCharacter* Character = Cast<AQuartzPlayerCharacter>(GetAvatarActorFromActorInfo());
     if (!Character)
     {
         UE_LOG(LogTemp, Error, TEXT("Damage failed: Avatar is not AQuartzCharacter"));
@@ -77,11 +78,23 @@ void UGA_QuartzBaseAttack::ApplyDamageToActor(AActor* TargetActor)
         TargetASC
     );
 
+    FGameplayEventData HitReactPayload;
+    HitReactPayload.EventTag = QuartzTags::Event_Attack_HitReact;
+    HitReactPayload.Instigator = GetAvatarActorFromActorInfo(); // attacker
+    HitReactPayload.Target = TargetActor;                       // enemy
+
+    UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+        TargetActor,
+        QuartzTags::Event_Attack_HitReact,
+        HitReactPayload
+    );
+
     UE_LOG(LogTemp, Warning, TEXT("Damage applied to %s using %s"), *GetNameSafe(TargetActor), *GetNameSafe(Character->WeaponData->DamageEffectClass));
 }
 
-void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+void UQuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
+    UE_LOG(LogTemp, Warning, TEXT("UQuartzBaseAttack::ActivateAbility called"));
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
     if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
@@ -131,7 +144,7 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
             InputTask->EventReceived.AddDynamic(
                 this,
-                &UGA_QuartzBaseAttack::OnComboInputEvent
+                &UQuartzBaseAttack::OnComboInputEvent
             );
 
             InputTask->ReadyForActivation();
@@ -146,7 +159,7 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
             Task->EventReceived.AddDynamic(
                 this,
-                &UGA_QuartzBaseAttack::OnComboWindowOpenEvent
+                &UQuartzBaseAttack::OnComboWindowOpenEvent
             );
 
             Task->ReadyForActivation();
@@ -161,7 +174,7 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
             Task->EventReceived.AddDynamic(
                 this,
-                &UGA_QuartzBaseAttack::OnComboWindowCloseEvent
+                &UQuartzBaseAttack::OnComboWindowCloseEvent
             );
 
             Task->ReadyForActivation();
@@ -176,7 +189,7 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
             Task->EventReceived.AddDynamic(
                 this,
-                &UGA_QuartzBaseAttack::OnComboCommitEvent
+                &UQuartzBaseAttack::OnComboCommitEvent
             );
 
             Task->ReadyForActivation();
@@ -191,7 +204,7 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
             HitTask->EventReceived.AddDynamic(
                 this,
-                &UGA_QuartzBaseAttack::OnAttackHitEvent
+                &UQuartzBaseAttack::OnAttackHitEvent
             );
 
             HitTask->ReadyForActivation();
@@ -205,9 +218,9 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
                 InitialSection
             );
 
-        Task->OnCompleted.AddDynamic(this, &UGA_QuartzBaseAttack::OnMontageFinished);
-        Task->OnInterrupted.AddDynamic(this, &UGA_QuartzBaseAttack::OnMontageFinished);
-        Task->OnCancelled.AddDynamic(this, &UGA_QuartzBaseAttack::OnMontageFinished);
+        Task->OnCompleted.AddDynamic(this, &UQuartzBaseAttack::OnMontageFinished);
+        Task->OnInterrupted.AddDynamic(this, &UQuartzBaseAttack::OnMontageFinished);
+        Task->OnCancelled.AddDynamic(this, &UQuartzBaseAttack::OnMontageFinished);
 
         Task->ReadyForActivation();
     }
@@ -217,17 +230,17 @@ void UGA_QuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
     }
 }
 
-void UGA_QuartzBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+void UQuartzBaseAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
     Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UGA_QuartzBaseAttack::OnMontageFinished()
+void UQuartzBaseAttack::OnMontageFinished()
 {
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UGA_QuartzBaseAttack::OnComboInputEvent(FGameplayEventData Payload)
+void UQuartzBaseAttack::OnComboInputEvent(FGameplayEventData Payload)
 {
 
     if (bComboWindowOpen)
@@ -236,17 +249,17 @@ void UGA_QuartzBaseAttack::OnComboInputEvent(FGameplayEventData Payload)
     }
 }
 
-void UGA_QuartzBaseAttack::OnComboWindowOpenEvent(FGameplayEventData Payload)
+void UQuartzBaseAttack::OnComboWindowOpenEvent(FGameplayEventData Payload)
 {
     bComboWindowOpen = true;
 }
 
-void UGA_QuartzBaseAttack::OnComboWindowCloseEvent(FGameplayEventData Payload)
+void UQuartzBaseAttack::OnComboWindowCloseEvent(FGameplayEventData Payload)
 {
     bComboWindowOpen = false;
 }
 
-void UGA_QuartzBaseAttack::OnComboCommitEvent(FGameplayEventData Payload)
+void UQuartzBaseAttack::OnComboCommitEvent(FGameplayEventData Payload)
 {
     if (!AttackMontage)
     {
@@ -283,7 +296,7 @@ void UGA_QuartzBaseAttack::OnComboCommitEvent(FGameplayEventData Payload)
     }
 }
 
-void UGA_QuartzBaseAttack::OnAttackHitEvent(FGameplayEventData Payload)
+void UQuartzBaseAttack::OnAttackHitEvent(FGameplayEventData Payload)
 {
     AActor* HitActor = const_cast<AActor*>(Payload.Target.Get());
 

@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayAbilitySystem/Characters/QuartzCharacterBase.h"
+#include "Characters/QuartzCharacter.h"
 #include "QuartzEnemy.generated.h"
 
 UCLASS()
-class QUARTZ_API AQuartzEnemy : public AQuartzCharacterBase
+class QUARTZ_API AQuartzEnemy : public AQuartzCharacter
 {
 	GENERATED_BODY()
 
@@ -27,4 +27,7 @@ public:
 	bool IsDead() const;
 
 	float GetLockOutDistance() const { return LockOutDistance; }
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "GameplayCue")
+	void OnHitCue();
 };

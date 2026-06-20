@@ -9,7 +9,7 @@
 #include "QuartzHealthComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(Custom), meta=(Blueprintable) )
 class QUARTZ_API UQuartzHealthComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -22,7 +22,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	void UpdateHealthBar();
+	void UpdateHealthBar(const float Health, const float MaxHealth);
 
 	void OnHealthChanged(const FOnAttributeChangeData& Data);
 
@@ -32,10 +32,16 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable)
+	void HideHealthBar();
+
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HealthBarWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "Ability")
+	TSubclassOf<UGameplayAbility> HitReactionAbilityClass;
 
 protected:
 
@@ -47,4 +53,6 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UQuartzHealthAttributeSet> HealthSet;
+
+	bool bIsDead = false;
 };

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameplayAbilitySystem/Abilities/GA_QuartzDash.h"
+#include "GameplayAbilitySystem/Abilities/QuartzDash.h"
 #include "QuartzGameplayTags.h"
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "GameFramework/Character.h"
@@ -9,7 +9,7 @@
 #include <Abilities/Tasks/AbilityTask_PlayMontageAndWait.h>
 #include "AbilitySystemComponent.h"
 
-UGA_QuartzDash::UGA_QuartzDash()
+UQuartzDash::UQuartzDash()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor; 
 	
@@ -19,7 +19,7 @@ UGA_QuartzDash::UGA_QuartzDash()
     ActivationOwnedTags.AddTag(QuartzTags::State_Dashing);
 }
 
-void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+void UQuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
@@ -60,7 +60,7 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
             false
         );
 
-    DashTask->OnFinish.AddDynamic(this, &UGA_QuartzDash::OnDashFinished);
+    DashTask->OnFinish.AddDynamic(this, &UQuartzDash::OnDashFinished);
     DashTask->ReadyForActivation();
 
     // Choose section based on direction
@@ -103,12 +103,12 @@ void UGA_QuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
     
 }
 
-void UGA_QuartzDash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+void UQuartzDash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UGA_QuartzDash::OnDashFinished()
+void UQuartzDash::OnDashFinished()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

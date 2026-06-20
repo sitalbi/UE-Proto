@@ -5,6 +5,7 @@ namespace QuartzTags
 {
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Dash);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Light);
+    UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_HitReact);
 
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Dash);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Attack_Light);
@@ -13,13 +14,18 @@ namespace QuartzTags
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dashing);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Attacking);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Stunned);
+    UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReact);
+    UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
 
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Input_LightAttack);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Combo_Window_Open);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Combo_Window_Close);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Combo_Commit);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_Hit);
+    UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_HitReact);
 
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_Damage);
     UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_DashCooldown);
+
+    UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cue_Hit_Flash);
 }

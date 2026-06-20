@@ -4,133 +4,43 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/QuartzInteractionComponent.h"
-#include "GameplayAbilitySystem/Characters/QuartzCharacterBase.h"
-#include <QuartzWeaponData.h>
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+#include <GameplayAbilitySystem/QuartzAbilityInputTypes.h>
+#include <GameplayAbilitySystem/AttributeSets/QuartzHealthAttributeSet.h>
 #include "QuartzCharacter.generated.h"
 
-// Forward declarations
-class USpringArmComponent;
-class UCameraComponent;
-class UInputMappingContext;
-class UInputAction;
-struct FInputActionValue;
-class ASMagicProjectile;
-class UAnimMontage;
-class UQuartzTargetLockComponent;
 
 UCLASS()
-class QUARTZ_API AQuartzCharacter : public AQuartzCharacterBase
+class QUARTZ_API AQuartzCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
 	AQuartzCharacter();
 
-public:
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Camera")
-	UCameraComponent* GetFollowCamera();
-
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	void AttachWeapon(bool bEquip);
-
 protected:
 	virtual void BeginPlay() override;
 
-	// Movement input handling
-	void Move(const FInputActionValue& Value);
+	void InitDefaultAbilities();
 
-	// Look input handling
-	void Look(const FInputActionValue& Value);
+public:	
+	virtual void Tick(float DeltaTime) override;
 
-	// Landed override
-	virtual void Landed(const FHitResult& Hit) override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
-	// Jump override
-	virtual void Jump() override;
-
-	// Stop Jumping override
-	virtual void StopJumping() override;
-
-	void Dash();
-
-	void EquipWeapon();
-
-	void LightAttack();
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDeath();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
-	bool Debug = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<UQuartzWeaponData> WeaponData;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	UAbilitySystemComponent* AbilitySystemComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	FName WeaponHandSocket;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
-	FName WeaponSheathSocket;
-
-protected:
-	// Input Mapping Context (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputMappingContext* DefaultMappingContext;
-
-	// Movement action (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* MoveAction;
-
-	// Look action (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* LookAction;
-
-	// Jump action (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* JumpAction;
-
-	// Dash action (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* DashAction;
-
-	// Equip action (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* EquipAction;
-
-	// Equip action (Enhanced Input System)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	UInputAction* LightAttackAction;
-
-	// Equip anim montage
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	UAnimMontage* EquipMontage;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStaticMeshComponent> WeaponMeshComp;
-
-private:
-	// Spring Arm Component
-	UPROPERTY(VisibleAnywhere)
-	USpringArmComponent* SpringArmComp;
-
-	// Camera Component
-	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* CameraComp;
-
-	UPROPERTY(Category = Character, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UQuartzTargetLockComponent> TargetLockComp;
-
-	UPROPERTY()
-	TArray<FGameplayAbilitySpecHandle> WeaponAbilityHandles;
-
-	UPROPERTY()
-	FGameplayTag EquipTag;
-
-	float DefaultSpeed = 600.0f;
-
-	bool isEquipped = false;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem | Health")
+	TObjectPtr<UQuartzHealthAttributeSet> HealthSet;
 };
+
