@@ -7,6 +7,7 @@
 #include <Characters/QuartzPlayerCharacter.h>
 #include "QuartzTargetLockComponent.generated.h"
 
+
 class UInputAction;
 struct FInputActionValue;
 
@@ -35,7 +36,7 @@ protected:
 
 	// TODO: make lockOnDiestance a variable in Enemy class and so dependent on the enemy type
 	UPROPERTY(EditAnywhere, Category = "Lock variables")
-	float lockOnDistance = 1000.0f;
+	float MaxLockSearchDistance = 5000.0f;
 
 
 	UPROPERTY(EditAnywhere, Category = "Lock variables")
@@ -46,31 +47,25 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Lock variables")
 	float clampAngle = 35.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Lock variables")
-	TSubclassOf<AActor>lockOnClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<AQuartzPlayerCharacter> OwningCharacter;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	AQuartzPlayerCharacter* OwningCharacter;
+	TObjectPtr<AActor> TargetActor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	AActor* targetActor;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UUserWidget* lockWidget; // TODO: Replace lockWidget logic with the same widget logic as InteractionComponent in blueprint
+	TObjectPtr<UUserWidget> lockWidget; // TODO: Replace lockWidget logic with the same widget logic as InteractionComponent in blueprint
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FVector2D lockWidgetViewportSizeOffset = FVector2D(50, 50);
 
 	/** Target Lock Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* TargetLockAction;
+	TObjectPtr<UInputAction> TargetLockAction;
 
 	/** Switch target Lock Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* SwitchTargetLockAction;
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FVector GetTargetLocation();
+	TObjectPtr<UInputAction> SwitchTargetLockAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UUserWidget> LockWidgetClass;
@@ -94,12 +89,20 @@ protected:
 
 	TArray<AActor*> TraceForTarget();
 
-	AActor* GetTargetActor(TArray<AActor*> actors);
-	AActor* GetTargetActorSwitch(TArray<AActor*> actors, EDirection direction);
+	AActor* GetTargetActor(const TArray<AActor*>& actors);
+	AActor* GetTargetActorSwitch(const TArray<AActor*>& actors, EDirection direction);
 
 	void SwitchTargetLock(const FInputActionValue& Value);
 
 	void UpdateTargetLock();
+
+	bool IsLockableTarget(AActor* Actor) const;
+	FVector GetLockableLocation(AActor* Actor) const;
+	float GetLockableLockOnDistance(AActor* Actor) const;
+	float GetLockableLockOutDistance(AActor* Actor) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FVector GetTargetLocation();
 
 private:
 

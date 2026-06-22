@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Characters/QuartzCharacter.h"
+#include "Interfaces/QuartzTargetLockableInterface.h"
 #include "QuartzEnemy.generated.h"
 
 UCLASS()
-class QUARTZ_API AQuartzEnemy : public AQuartzCharacter
+class QUARTZ_API AQuartzEnemy : public AQuartzCharacter, public IQuartzTargetLockableInterface
 {
 	GENERATED_BODY()
 
@@ -17,16 +18,11 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float LockOutDistance = 1000.0f;
-
 public:	
 
 	virtual void Tick(float DeltaTime) override;
 
 	bool IsDead() const;
-
-	float GetLockOutDistance() const { return LockOutDistance; }
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "GameplayCue")
 	void OnHitCue();

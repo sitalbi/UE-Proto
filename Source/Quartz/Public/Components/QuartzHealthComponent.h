@@ -35,6 +35,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void HideHealthBar();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsDead() { return bIsDead; }
+
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")

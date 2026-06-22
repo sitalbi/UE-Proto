@@ -7,6 +7,7 @@
 #include "QuartzInteractableInterface.h"
 #include "QuartzInteractionComponent.generated.h"
 
+
 class UInputAction;
 class UWidgetComponent;
 
