@@ -22,8 +22,13 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
 	bool IsDead() const;
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "GameplayCue")
 	void OnHitCue();
+
+		
+	UFUNCTION(BlueprintCallable)
+	bool Attack();
 };

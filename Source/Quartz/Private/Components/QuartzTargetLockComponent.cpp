@@ -1,126 +1,263 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Components/QuartzTargetLockComponent.h"
-#include "GameFramework/Character.h"
-#include <EnhancedInputSubsystems.h>
-#include <EnhancedInputComponent.h>
-#include "GameFramework/CharacterMovementComponent.h"
+
 #include "Camera/CameraComponent.h"
-#include <Kismet/KismetMathLibrary.h>
+#include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "DrawDebugHelpers.h"
-#include "Blueprint/UserWidget.h"
 #include "Interfaces/QuartzTargetLockableInterface.h"
+
 
 UQuartzTargetLockComponent::UQuartzTargetLockComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-
-void UQuartzTargetLockComponent::BindInput(UEnhancedInputComponent* PlayerInputComponent)
-{
-	if (TargetLockAction && PlayerInputComponent)
-	{
-		PlayerInputComponent->BindAction(TargetLockAction, ETriggerEvent::Triggered, this, &UQuartzTargetLockComponent::LockOnTarget);
-		PlayerInputComponent->BindAction(SwitchTargetLockAction, ETriggerEvent::Triggered, this, &UQuartzTargetLockComponent::SwitchTargetLock);
-	}
-}
 
 void UQuartzTargetLockComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	OwningCharacter = Cast<AQuartzPlayerCharacter>(GetOwner());
+
+	if (!IsValid(OwningCharacter))
+	{
+		UE_LOG(LogTemp, Error, TEXT("QuartzTargetLockComponent owner is not AQuartzPlayerCharacter"));
+		return;
+	}
+
+	SetComponentTickEnabled(false);
 }
+
+
+void UQuartzTargetLockComponent::BindInput(UEnhancedInputComponent* PlayerInputComponent)
+{
+	if (!PlayerInputComponent)
+	{
+		return;
+	}
+
+	if (TargetLockAction)
+	{
+		PlayerInputComponent->BindAction(TargetLockAction, ETriggerEvent::Started, this, &UQuartzTargetLockComponent::LockOnTarget);
+	}
+
+	if (SwitchTargetLockAction)
+	{
+		PlayerInputComponent->BindAction(SwitchTargetLockAction, ETriggerEvent::Triggered, this, &UQuartzTargetLockComponent::SwitchTargetLock);
+	}
+}
+
 
 void UQuartzTargetLockComponent::LockOnTarget(const FInputActionValue& Value)
 {
-	if(OwningCharacter->Debug) UE_LOG(LogTemp, Warning, TEXT("LockOnTarget Pressed"));
-
-	if (!bIsLockedOn)
+	if (!IsValid(OwningCharacter))
 	{
-		TArray<AActor*> Actors = TraceForTarget();
-
-		if (Actors.Num() > 0)
-		{
-			AActor* NewTarget = GetTargetActor(Actors);
-
-			if (NewTarget)
-			{
-				ChangeTargetActor(NewTarget);
-			}
-		}
+		return;
 	}
-	else
+
+	if (OwningCharacter->Debug)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LockOnTarget Pressed"));
+	}
+
+	if (bIsLockedOn)
 	{
 		ChangeTargetActor(nullptr);
+		return;
+	}
+
+	const TArray<AActor*> Actors = TraceForTarget();
+
+	if (Actors.IsEmpty())
+	{
+		return;
+	}
+
+	AActor* NewTarget = GetTargetActor(Actors);
+
+	if (IsValid(NewTarget))
+	{
+		ChangeTargetActor(NewTarget);
 	}
 }
 
+
+void UQuartzTargetLockComponent::SwitchTargetLock(const FInputActionValue& Value)
+{
+	if (!bIsLockedOn || !IsValid(OwningCharacter))
+	{
+		return;
+	}
+
+	const FVector2D InputAxisVector = Value.Get<FVector2D>();
+
+	if (FMath::IsNearlyZero(InputAxisVector.X))
+	{
+		return;
+	}
+
+	const EDirection Direction = InputAxisVector.X > 0.0f ? EDirection::Right : EDirection::Left;
+
+	AActor* NewTarget = GetTargetActorSwitch(TraceForTarget(), Direction);
+
+	if (OwningCharacter->Debug)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("New Target: %s"), *GetNameSafe(NewTarget));
+	}
+
+	if (IsValid(NewTarget))
+	{
+		ChangeTargetActor(NewTarget);
+	}
+}
+
+
+void UQuartzTargetLockComponent::ChangeTargetActor(AActor* NewTarget)
+{
+	if (!IsValid(OwningCharacter))
+	{
+		return;
+	}
+
+	TargetActor = NewTarget;
+
+	if (IsValid(TargetActor))
+	{
+		bIsLockedOn = true;
+
+		OwningCharacter->bUseControllerRotationYaw = true;
+		OwningCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
+
+		SetComponentTickEnabled(true);
+
+		OnLockTarget();
+
+		UpdateTargetLock(0.0f);
+	}
+	else
+	{
+		TargetActor = nullptr;
+		bIsLockedOn = false;
+
+		SetComponentTickEnabled(false);
+
+		OwningCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
+		OwningCharacter->bUseControllerRotationYaw = false;
+
+		OnUnlockTarget();
+	}
+}
+
+
+void UQuartzTargetLockComponent::UpdateTargetLock(float DeltaTime)
+{
+	if (!IsValid(OwningCharacter) || !bIsLockedOn || !IsValid(TargetActor))
+	{
+		ChangeTargetActor(nullptr);
+		return;
+	}
+
+	if (!IsLockableTarget(TargetActor))
+	{
+		ChangeTargetActor(nullptr);
+		return;
+	}
+
+	const FVector TargetLocation = GetLockableLocation(TargetActor);
+	const float Distance = FVector::Dist(OwningCharacter->GetActorLocation(), TargetLocation);
+	const float LockOutDistance = GetLockableLockOutDistance(TargetActor);
+
+	if (Distance > LockOutDistance)
+	{
+		ChangeTargetActor(nullptr);
+		return;
+	}
+
+	OnUpdateTargetLock();
+
+	if (AController* Controller = OwningCharacter->GetController())
+	{
+		const FRotator CurrentRotation = Controller->GetControlRotation();
+		const FRotator TargetRotation = GetLockOnRotation();
+
+		FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, interpolationSpeed);
+
+		NewRotation.Pitch = FMath::ClampAngle(NewRotation.Pitch, -clampAngle, clampAngle);
+
+		Controller->SetControlRotation(NewRotation);
+	}
+}
+
+
+void UQuartzTargetLockComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	UpdateTargetLock(DeltaTime);
+}
+
+
 TArray<AActor*> UQuartzTargetLockComponent::TraceForTarget()
 {
-	// Get all actors in a zone around the player using multi-sphere trace
-	TArray<FHitResult> hitResults;
-	TArray<AActor*> actorsToIgnore;
-	actorsToIgnore.Add(OwningCharacter);
-	TArray<AActor*> actorsToReturn;
+	TArray<AActor*> ActorsToReturn;
 
-	FVector pos = OwningCharacter->GetActorLocation();
-
-	FCollisionShape shape = FCollisionShape::MakeSphere(MaxLockSearchDistance);
-
-	bool hit = GetWorld()->SweepMultiByObjectType(
-		hitResults,
-		pos,
-		pos,
-		FQuat::Identity,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_Pawn),
-		shape
-	);
-
-
-	if (hit)
+	if (!IsValid(OwningCharacter) || !GetWorld())
 	{
-		for (const FHitResult& hitResult : hitResults)
-		{
-			AActor* actor = hitResult.GetActor();
+		return ActorsToReturn;
+	}
 
-			if (!actor || actorsToIgnore.Contains(actor) || actorsToReturn.Contains(actor))
+	TArray<FHitResult> HitResults;
+
+	const FVector Position = OwningCharacter->GetActorLocation();
+	const FCollisionShape Shape = FCollisionShape::MakeSphere(MaxLockSearchDistance);
+
+	const bool bHit = GetWorld()->SweepMultiByObjectType(HitResults, Position, Position, FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn), Shape);
+
+	if (bHit)
+	{
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* Actor = HitResult.GetActor();
+
+			if (!IsValid(Actor) || Actor == OwningCharacter || ActorsToReturn.Contains(Actor))
 			{
 				continue;
 			}
 
-			if (IsLockableTarget(actor))
+			if (!IsLockableTarget(Actor))
 			{
-				const float DistanceToActor = FVector::Dist(OwningCharacter->GetActorLocation(), GetLockableLocation(actor));
+				continue;
+			}
 
-				const float ActorLockOnDistance = GetLockableLockOnDistance(actor);
+			const float DistanceToActor = FVector::Dist(OwningCharacter->GetActorLocation(), GetLockableLocation(Actor));
+			const float LockOnDistance = GetLockableLockOnDistance(Actor);
 
-				if (DistanceToActor <= ActorLockOnDistance)
-				{
-					actorsToReturn.Add(actor);
-				}
+			if (DistanceToActor <= LockOnDistance)
+			{
+				ActorsToReturn.Add(Actor);
 			}
 		}
 	}
 
-	// Debug draw the sphere
-	if (OwningCharacter->Debug) DrawDebugSphere(GetWorld(), pos, MaxLockSearchDistance, 12, actorsToReturn.Num() > 0 ? FColor::Green : FColor::Red, false, 5.f);
+	if (OwningCharacter->Debug)
+	{
+		DrawDebugSphere(GetWorld(), Position, MaxLockSearchDistance, 12, ActorsToReturn.IsEmpty() ? FColor::Red : FColor::Green, false, 5.0f);
+	}
 
-	return actorsToReturn;
-
+	return ActorsToReturn;
 }
+
 
 AActor* UQuartzTargetLockComponent::GetTargetActor(const TArray<AActor*>& Actors)
 {
-	AActor* BestTarget = nullptr;
-	float BestDot = -1.0f;
-
-	if (!OwningCharacter || !OwningCharacter->GetFollowCamera())
+	if (!IsValid(OwningCharacter) || !OwningCharacter->GetFollowCamera())
 	{
 		return nullptr;
 	}
+
+	AActor* BestTarget = nullptr;
+	float BestDot = -1.0f;
 
 	const FVector CameraLocation = OwningCharacter->GetFollowCamera()->GetComponentLocation();
 	const FVector CameraForward = OwningCharacter->GetFollowCamera()->GetForwardVector();
@@ -134,7 +271,6 @@ AActor* UQuartzTargetLockComponent::GetTargetActor(const TArray<AActor*>& Actors
 
 		const FVector TargetLocation = GetLockableLocation(Actor);
 		const FVector ToTarget = (TargetLocation - CameraLocation).GetSafeNormal();
-
 		const float Dot = FVector::DotProduct(CameraForward, ToTarget);
 
 		if (Dot > BestDot)
@@ -146,27 +282,28 @@ AActor* UQuartzTargetLockComponent::GetTargetActor(const TArray<AActor*>& Actors
 
 	if (OwningCharacter->Debug && IsValid(BestTarget))
 	{
-		DrawDebugLine(GetWorld(), CameraLocation, GetLockableLocation(BestTarget), FColor::Red, false, 5.f);
+		DrawDebugLine(GetWorld(), CameraLocation, GetLockableLocation(BestTarget), FColor::Red, false, 5.0f);
 	}
 
 	return BestTarget;
 }
 
-AActor* UQuartzTargetLockComponent::GetTargetActorSwitch(const TArray<AActor*>& actors, EDirection direction)
-{
-	AActor* Target = nullptr;
-	float BestForwardDot = -1.0f;
 
-	if (!OwningCharacter || !OwningCharacter->GetFollowCamera())
+AActor* UQuartzTargetLockComponent::GetTargetActorSwitch(const TArray<AActor*>& Actors, EDirection Direction)
+{
+	if (!IsValid(OwningCharacter) || !OwningCharacter->GetFollowCamera())
 	{
 		return nullptr;
 	}
+
+	AActor* BestTarget = nullptr;
+	float BestForwardDot = -1.0f;
 
 	const FVector CameraLocation = OwningCharacter->GetFollowCamera()->GetComponentLocation();
 	const FVector CameraForward = OwningCharacter->GetFollowCamera()->GetForwardVector();
 	const FVector CameraRight = OwningCharacter->GetFollowCamera()->GetRightVector();
 
-	for (AActor* Actor : actors)
+	for (AActor* Actor : Actors)
 	{
 		if (!IsLockableTarget(Actor) || Actor == TargetActor)
 		{
@@ -177,12 +314,9 @@ AActor* UQuartzTargetLockComponent::GetTargetActorSwitch(const TArray<AActor*>& 
 		const FVector ToActor = (ActorLocation - CameraLocation).GetSafeNormal();
 
 		const float SideDot = FVector::DotProduct(CameraRight, ToActor);
+		const bool bCorrectSide = Direction == EDirection::Right ? SideDot > 0.0f : SideDot < 0.0f;
 
-		const bool bIsCorrectSide = direction == EDirection::Right
-			? SideDot > 0.0f
-			: SideDot < 0.0f;
-
-		if (!bIsCorrectSide)
+		if (!bCorrectSide)
 		{
 			continue;
 		}
@@ -192,89 +326,15 @@ AActor* UQuartzTargetLockComponent::GetTargetActorSwitch(const TArray<AActor*>& 
 		if (ForwardDot > BestForwardDot)
 		{
 			BestForwardDot = ForwardDot;
-			Target = Actor;
+			BestTarget = Actor;
 		}
 	}
 
-	return Target;
+	return BestTarget;
 }
 
-void UQuartzTargetLockComponent::SwitchTargetLock(const FInputActionValue& Value)
-{
-	if (bIsLockedOn) {
-		FVector2D InputAxisVector = Value.Get<FVector2D>();
 
-		AActor* newTarget = nullptr;
-		EDirection direction = InputAxisVector.X > 0 ? EDirection::Right : EDirection::Left;
-		newTarget = GetTargetActorSwitch(TraceForTarget(), direction);
-
-		if (OwningCharacter->Debug) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("New Target: %s"), newTarget ? *newTarget->GetName() : TEXT("None")));
-
-		if (newTarget != nullptr) {
-			ChangeTargetActor(newTarget);
-		}
-	}
-}
-
-void UQuartzTargetLockComponent::UpdateTargetLock()
-{
-	if (!bIsLockedOn || IsValid(TargetActor))
-	{
-		ChangeTargetActor(nullptr);
-		return;
-	}
-	else
-	{
-		if (!IsLockableTarget(TargetActor))
-		{
-			AActor* newTarget = GetTargetActor(TraceForTarget());
-
-			if (OwningCharacter->Debug)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					5.f,
-					FColor::Red,
-					FString::Printf(TEXT("New Target: %s"), newTarget ? *newTarget->GetName() : TEXT("None"))
-				);
-			}
-
-			ChangeTargetActor(newTarget);
-			return;
-		}
-		const FVector Start = OwningCharacter->GetActorLocation();
-		const FVector End = GetLockableLocation(TargetActor);
-
-		const float Distance = FVector::Dist(Start, End);
-
-		const float LockOutDistance = GetLockableLockOutDistance(TargetActor);
-
-		if (Distance > LockOutDistance)
-		{
-			ChangeTargetActor(nullptr);
-			return;
-		}
-		else {
-
-			FRotator currentRotation = OwningCharacter->GetController()->GetControlRotation();
-
-			FRotator targetRotation = GetLockOnRotation();
-
-			float deltaTime = GetWorld()->GetDeltaSeconds();
-			float interpSpeed = interpolationSpeed;
-
-			FRotator newRotation = FMath::RInterpTo(currentRotation, targetRotation, deltaTime, interpSpeed);
-
-			// clamp the pitch to prevent the player from looking up or down too much
-			newRotation.Pitch = FMath::ClampAngle(newRotation.Pitch, -clampAngle, clampAngle);
-
-			// Set the rotation of the camera
-			OwningCharacter->GetController()->SetControlRotation(newRotation);
-		}
-	}
-}
-
-FVector UQuartzTargetLockComponent::GetTargetLocation()
+FVector UQuartzTargetLockComponent::GetTargetLocation() const
 {
 	if (IsLockableTarget(TargetActor))
 	{
@@ -284,58 +344,22 @@ FVector UQuartzTargetLockComponent::GetTargetLocation()
 	return FVector::ZeroVector;
 }
 
-void UQuartzTargetLockComponent::SetLockTimer(bool IsLocked)
+
+FRotator UQuartzTargetLockComponent::GetLockOnRotation() const
 {
-	if (IsLocked) {
-		GetWorld()->GetTimerManager().SetTimer(TargetLockTimerHandle, this, &UQuartzTargetLockComponent::UpdateTargetLock, GetWorld()->GetDeltaSeconds(), true);
-	}
-	else
+	if (!IsValid(OwningCharacter) || !OwningCharacter->GetFollowCamera() || !IsLockableTarget(TargetActor))
 	{
-		GetWorld()->GetTimerManager().ClearTimer(TargetLockTimerHandle);
+		return FRotator::ZeroRotator;
 	}
+
+	const FVector CameraLocation = OwningCharacter->GetFollowCamera()->GetComponentLocation();
+	const FVector TargetLocation = GetLockableLocation(TargetActor);
+	const double Distance = FVector::Dist(CameraLocation, TargetLocation);
+
+	const FVector AdjustedTargetLocation(TargetLocation.X, TargetLocation.Y, TargetLocation.Z - Distance / distanceFactor);
+
+	return (AdjustedTargetLocation - CameraLocation).Rotation();
 }
-
-FRotator UQuartzTargetLockComponent::GetLockOnRotation()
-{
-	FVector start = OwningCharacter->GetFollowCamera()->GetComponentLocation();
-
-	FVector targetPos = GetTargetLocation();
-
-	double dist = FVector::Dist(start, targetPos);
-
-	FVector end = FVector(targetPos.X, targetPos.Y, targetPos.Z - (dist / distanceFactor));
-
-	FVector Direction = end - start;
-
-	FRotator Rot = FRotationMatrix::MakeFromX(Direction).Rotator();
-
-
-	return Rot;
-}
-
-void UQuartzTargetLockComponent::ChangeTargetActor(AActor* newTarget)
-{
-	TargetActor = newTarget;
-	if (newTarget != nullptr)
-	{
-		bIsLockedOn = true;
-		SetLockTimer(true);
-		OwningCharacter->bUseControllerRotationYaw = true;
-		OwningCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
-		OnLockTarget();
-	}
-	else
-	{
-		SetLockTimer(false);
-		bIsLockedOn = false;
-		OwningCharacter->GetCharacterMovement()->bOrientRotationToMovement = true;
-		OwningCharacter->bUseControllerRotationYaw = false; 
-		OnUnlockTarget();
-	}
-}
-
-
-
 
 
 bool UQuartzTargetLockComponent::IsLockableTarget(AActor* Actor) const
@@ -353,6 +377,7 @@ bool UQuartzTargetLockComponent::IsLockableTarget(AActor* Actor) const
 	return IQuartzTargetLockableInterface::Execute_CanBeLockedOn(Actor);
 }
 
+
 FVector UQuartzTargetLockComponent::GetLockableLocation(AActor* Actor) const
 {
 	if (!IsLockableTarget(Actor))
@@ -362,6 +387,7 @@ FVector UQuartzTargetLockComponent::GetLockableLocation(AActor* Actor) const
 
 	return IQuartzTargetLockableInterface::Execute_GetLockOnLocation(Actor);
 }
+
 
 float UQuartzTargetLockComponent::GetLockableLockOnDistance(AActor* Actor) const
 {
@@ -373,6 +399,7 @@ float UQuartzTargetLockComponent::GetLockableLockOnDistance(AActor* Actor) const
 	return IQuartzTargetLockableInterface::Execute_GetLockOnDistance(Actor);
 }
 
+
 float UQuartzTargetLockComponent::GetLockableLockOutDistance(AActor* Actor) const
 {
 	if (!IsLockableTarget(Actor))
@@ -381,10 +408,4 @@ float UQuartzTargetLockComponent::GetLockableLockOutDistance(AActor* Actor) cons
 	}
 
 	return IQuartzTargetLockableInterface::Execute_GetLockOutDistance(Actor);
-}
-
-// Called every frame
-void UQuartzTargetLockComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }

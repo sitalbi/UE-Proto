@@ -62,10 +62,7 @@ void UQuartzBaseAttack::ApplyDamageToActor(AActor* TargetActor)
     FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(Character->WeaponData->DamageEffectClass, GetAbilityLevel());
 
 
-    SpecHandle.Data->SetSetByCallerMagnitude(
-        QuartzTags::Data_Damage,
-        -Character->WeaponData->BaseDamage
-    );
+    SpecHandle.Data->SetSetByCallerMagnitude(QuartzTags::Data_Damage, -Character->WeaponData->BaseDamage);
     
     if (!SpecHandle.IsValid())
     {
@@ -73,10 +70,7 @@ void UQuartzBaseAttack::ApplyDamageToActor(AActor* TargetActor)
         return;
     }
 
-    GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(
-        *SpecHandle.Data.Get(),
-        TargetASC
-    );
+    GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
 
     FGameplayEventData HitReactPayload;
     HitReactPayload.EventTag = QuartzTags::Event_Attack_HitReact;
@@ -103,30 +97,12 @@ void UQuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
         return;
     }
 
-    ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-    if (!Character || !AttackMontage)
+    
+    if (!AttackMontage)
     {
         EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
         return;
     }
-
-    // Get desired attack direction
-    FVector WorldDir = Character->GetLastMovementInputVector();
-
-    if (WorldDir.IsNearlyZero())
-    {
-        WorldDir = Character->GetActorForwardVector();
-    }
-
-    // Flatten to ground plane
-    WorldDir.Z = 0.f;
-    WorldDir.Normalize();
-
-    // Convert to facing rotation
-    FRotator DesiredRotation = WorldDir.Rotation();
-
-    // Instantly face that direction
-    Character->SetActorRotation(DesiredRotation);
 
     // Play montage
     if (AttackMontage)
@@ -136,11 +112,10 @@ void UQuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
         if (ComboInputEventTag.IsValid())
         {
-            UAbilityTask_WaitGameplayEvent* InputTask =
-                UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-                    this,
-                    ComboInputEventTag
-                );
+            UAbilityTask_WaitGameplayEvent* InputTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+                        this,
+                        ComboInputEventTag
+                    );
 
             InputTask->EventReceived.AddDynamic(
                 this,
@@ -166,8 +141,7 @@ void UQuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
         }
 
         {
-            UAbilityTask_WaitGameplayEvent* Task =
-                UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+            UAbilityTask_WaitGameplayEvent* Task = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
                     this,
                     QuartzTags::Event_Combo_Window_Close
                 );
@@ -181,11 +155,10 @@ void UQuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
         }
 
         {
-            UAbilityTask_WaitGameplayEvent* Task =
-                UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-                    this,
-                    QuartzTags::Event_Combo_Commit
-                );
+            UAbilityTask_WaitGameplayEvent* Task = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+                        this,
+                        QuartzTags::Event_Combo_Commit
+                    );
 
             Task->EventReceived.AddDynamic(
                 this,
@@ -196,11 +169,10 @@ void UQuartzBaseAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
         }
 
         {
-            UAbilityTask_WaitGameplayEvent* HitTask =
-                UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-                    this,
-                    QuartzTags::Event_Attack_Hit
-                );
+            UAbilityTask_WaitGameplayEvent* HitTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+                        this,
+                        QuartzTags::Event_Attack_Hit
+                    );
 
             HitTask->EventReceived.AddDynamic(
                 this,
@@ -242,7 +214,6 @@ void UQuartzBaseAttack::OnMontageFinished()
 
 void UQuartzBaseAttack::OnComboInputEvent(FGameplayEventData Payload)
 {
-
     if (bComboWindowOpen)
     {
         bQueuedNextCombo = true;
@@ -287,10 +258,12 @@ void UQuartzBaseAttack::OnComboCommitEvent(FGameplayEventData Payload)
             return;
         }
 
-        AnimInstance->Montage_JumpToSection(
-            AnimMontageComboSections[CurrentComboIndex],
-            AttackMontage
-        );
+        UpdateAttackDirection();
+
+        const FName NextSection = AnimMontageComboSections[CurrentComboIndex];
+        const int32 SectionIndex = AttackMontage->GetSectionIndex(NextSection);
+
+        AnimInstance->Montage_JumpToSection(NextSection, AttackMontage);
 
         return;
     }
@@ -306,4 +279,32 @@ void UQuartzBaseAttack::OnAttackHitEvent(FGameplayEventData Payload)
     }
 
     ApplyDamageToActor(HitActor);
+}
+
+void UQuartzBaseAttack::UpdateAttackDirection()
+{
+    ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+
+    if (!Character)
+    {
+        return;
+    }
+
+    // Get desired attack direction
+    FVector WorldDir = Character->GetLastMovementInputVector();
+
+    if (WorldDir.IsNearlyZero())
+    {
+        WorldDir = Character->GetActorForwardVector();
+    }
+
+    // Flatten to ground plane
+    WorldDir.Z = 0.f;
+    WorldDir.Normalize();
+
+    // Convert to facing rotation
+    FRotator DesiredRotation = WorldDir.Rotation();
+
+    // Instantly face that direction
+    Character->SetActorRotation(DesiredRotation);
 }

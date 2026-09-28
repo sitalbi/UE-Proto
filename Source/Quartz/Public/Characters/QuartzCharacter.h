@@ -24,6 +24,9 @@ protected:
 
 	void InitDefaultAbilities();
 
+	void UpdateMovementStateTags();
+
+
 public:	
 	virtual void Tick(float DeltaTime) override;
 
@@ -31,6 +34,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDeath();
+
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 
 public:
 

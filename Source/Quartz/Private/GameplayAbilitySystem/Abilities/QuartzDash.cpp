@@ -17,6 +17,8 @@ UQuartzDash::UQuartzDash()
 	AbilityTags.AddTag(QuartzTags::Input_Dash); 
 
     ActivationOwnedTags.AddTag(QuartzTags::State_Dashing);
+
+    CancelAbilitiesWithTag.AddTag(QuartzTags::Ability_Attack);
 }
 
 void UQuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)

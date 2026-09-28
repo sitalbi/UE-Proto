@@ -52,6 +52,9 @@ protected:
 	UFUNCTION()
 	void OnAttackHitEvent(FGameplayEventData Payload);
 
+	UFUNCTION()
+	void UpdateAttackDirection();
+
 public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")

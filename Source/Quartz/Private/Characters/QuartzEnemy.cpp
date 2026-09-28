@@ -1,4 +1,5 @@
 #include "Characters/QuartzEnemy.h"
+#include "QuartzGameplayTags.h"
 
 
 AQuartzEnemy::AQuartzEnemy()
@@ -23,6 +24,18 @@ void AQuartzEnemy::Tick(float DeltaTime)
 
 bool AQuartzEnemy::IsDead() const
 {
-	return false;
+	return HealthSet->GetHealth() <= 0;
 }
 
+bool AQuartzEnemy::Attack()
+{
+	if (!AbilitySystemComponent)
+	{
+		return false;
+	}
+
+	FGameplayTagContainer AbilityTags;
+	AbilityTags.AddTag(QuartzTags::Ability_Attack_Light);
+
+	return AbilitySystemComponent->TryActivateAbilitiesByTag(AbilityTags);
+}

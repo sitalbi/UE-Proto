@@ -1,22 +1,24 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include <Characters/QuartzPlayerCharacter.h>
+#include "Characters/QuartzPlayerCharacter.h"
 #include "QuartzTargetLockComponent.generated.h"
 
 
 class UInputAction;
+class UEnhancedInputComponent;
+class UUserWidget;
+
 struct FInputActionValue;
 
-UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+
+UCLASS(Blueprintable, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class QUARTZ_API UQuartzTargetLockComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UQuartzTargetLockComponent();
 
 	enum class EDirection
@@ -25,90 +27,112 @@ public:
 		Right
 	};
 
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void BindInput(UEnhancedInputComponent* PlayerInputComponent);
+
+	UFUNCTION(BlueprintCallable, Category = "Character")
+	bool IsLockedOn() const
+	{
+		return bIsLockedOn;
+	}
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lock")
+	FVector GetTargetLocation() const;
+
 
 protected:
-
 	virtual void BeginPlay() override;
 
 	void LockOnTarget(const FInputActionValue& Value);
-
-	bool bIsLockedOn = false;
-
-	// TODO: make lockOnDiestance a variable in Enemy class and so dependent on the enemy type
-	UPROPERTY(EditAnywhere, Category = "Lock variables")
-	float MaxLockSearchDistance = 5000.0f;
-
-
-	UPROPERTY(EditAnywhere, Category = "Lock variables")
-	float interpolationSpeed = 10.0f;
-	UPROPERTY(EditAnywhere, Category = "Lock variables")
-	float distanceFactor = 3.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Lock variables")
-	float clampAngle = 35.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<AQuartzPlayerCharacter> OwningCharacter;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<AActor> TargetActor;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UUserWidget> lockWidget; // TODO: Replace lockWidget logic with the same widget logic as InteractionComponent in blueprint
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FVector2D lockWidgetViewportSizeOffset = FVector2D(50, 50);
-
-	/** Target Lock Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> TargetLockAction;
-
-	/** Switch target Lock Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputAction> SwitchTargetLockAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<class UUserWidget> LockWidgetClass;
-
-	FTimerHandle TargetLockTimerHandle;
-
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Character")
-	bool IsLockedOn() const { return bIsLockedOn; }
-
-	void BindInput(class UEnhancedInputComponent* PlayerInputComponent);
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Lock Events")
-	void OnLockTarget();
-	UFUNCTION(BlueprintImplementableEvent, Category = "Lock Events")
-	void OnUnlockTarget();
-
-protected:
+	void SwitchTargetLock(const FInputActionValue& Value);
 
 	TArray<AActor*> TraceForTarget();
 
-	AActor* GetTargetActor(const TArray<AActor*>& actors);
-	AActor* GetTargetActorSwitch(const TArray<AActor*>& actors, EDirection direction);
+	AActor* GetTargetActor(const TArray<AActor*>& Actors);
+	AActor* GetTargetActorSwitch(const TArray<AActor*>& Actors, EDirection Direction);
 
-	void SwitchTargetLock(const FInputActionValue& Value);
-
-	void UpdateTargetLock();
+	void UpdateTargetLock(float DeltaTime);
 
 	bool IsLockableTarget(AActor* Actor) const;
+
 	FVector GetLockableLocation(AActor* Actor) const;
+
 	float GetLockableLockOnDistance(AActor* Actor) const;
+
 	float GetLockableLockOutDistance(AActor* Actor) const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FVector GetTargetLocation();
+
+	/*
+	 * Blueprint events
+	 */
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lock Events")
+	void OnLockTarget();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lock Events")
+	void OnUnlockTarget();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lock Events")
+	void OnUpdateLockTargetPosition(FVector2D ScreenPosition);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lock Events")
+	void OnUpdateTargetLock();
+
+
+	/*
+	 * Lock state
+	 */
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lock")
+	bool bIsLockedOn = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lock")
+	TObjectPtr<AQuartzPlayerCharacter> OwningCharacter = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lock")
+	TObjectPtr<AActor> TargetActor = nullptr;
+
+
+	/*
+	 * Lock configuration
+	 */
+
+	UPROPERTY(EditAnywhere, Category = "Lock Variables")
+	float MaxLockSearchDistance = 5000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Lock Variables")
+	float interpolationSpeed = 10.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Lock Variables")
+	float distanceFactor = 3.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Lock Variables")
+	float clampAngle = 35.0f;
+
+
+	/*
+	 * Input
+	 */
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> TargetLockAction = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> SwitchTargetLockAction = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UUserWidget> lockWidget = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	FVector2D lockWidgetViewportSizeOffset = FVector2D(50.0f, 50.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> LockWidgetClass;
+
 
 private:
+	void ChangeTargetActor(AActor* NewTarget);
 
-	void SetLockTimer(bool IsLocked);
-	void ChangeTargetActor(AActor* newTarget);
-
-	FRotator GetLockOnRotation();
-
+	FRotator GetLockOnRotation() const;
 };

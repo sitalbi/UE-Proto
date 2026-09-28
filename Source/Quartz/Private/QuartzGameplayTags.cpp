@@ -6,9 +6,12 @@ UE_DEFINE_GAMEPLAY_TAG(QuartzTags::State_Stunned, "State.Stunned");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::State_Dashing, "State.Dashing");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::State_Dead, "State.Dead");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::State_HitReact, "State.HitReact");
+UE_DEFINE_GAMEPLAY_TAG(QuartzTags::State_Movement_Grounded, "State.Movement.Grounded");
+UE_DEFINE_GAMEPLAY_TAG(QuartzTags::State_Movement_Air, "State.Movement.Air");
 
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Ability_Dash, "GameplayAbilities.Ability.Dash");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Ability_Attack_Light, "GameplayAbilities.Ability.Attack.Light");
+UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Ability_Attack, "GameplayAbilities.Ability.Attack");
 UE_DEFINE_GAMEPLAY_TAG(QuartzTags::Ability_HitReact, "GameplayAbilities.Ability.HitReact");
 
 

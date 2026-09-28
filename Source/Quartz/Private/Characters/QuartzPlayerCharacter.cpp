@@ -94,7 +94,7 @@ void AQuartzPlayerCharacter::Look(const FInputActionValue& Value)
 	{
 		return;
 	}
-	const FVector2D LookAxisValue = Value.Get<FVector2D>();
+	const FVector2D LookAxisValue = Value.Get<FVector2D>() * CameraSensitivity;
 	AddControllerYawInput(LookAxisValue.X);
 	AddControllerPitchInput(LookAxisValue.Y);
 }

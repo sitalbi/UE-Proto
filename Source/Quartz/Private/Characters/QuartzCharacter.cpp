@@ -3,6 +3,8 @@
 
 #include "Characters/QuartzCharacter.h"
 #include "GameplayAbilitySystem/Abilities/QuartzDash.h"
+#include "QuartzGameplayTags.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AQuartzCharacter::AQuartzCharacter()
 {
@@ -22,6 +24,9 @@ void AQuartzCharacter::BeginPlay()
 	Super::BeginPlay();
 
     InitDefaultAbilities();
+
+    // Init tags
+    UpdateMovementStateTags();
 }
 
 void AQuartzCharacter::InitDefaultAbilities()
@@ -30,15 +35,32 @@ void AQuartzCharacter::InitDefaultAbilities()
     {
         AbilitySystemComponent->InitAbilityActorInfo(this, this);
 
-        for (auto AbilityClass : DefaultAbilities)
+        for (auto& AbilityClass : DefaultAbilities)
         {
             if (AbilityClass)
             {
-                AbilitySystemComponent->GiveAbility(
-                    FGameplayAbilitySpec(AbilityClass, 1)
-                );
+                AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1));
             }
         }
+    }
+}
+
+void AQuartzCharacter::UpdateMovementStateTags()
+{
+    if (!AbilitySystemComponent) return;
+
+    AbilitySystemComponent->RemoveLooseGameplayTag(QuartzTags::State_Movement_Grounded);
+    AbilitySystemComponent->RemoveLooseGameplayTag(QuartzTags::State_Movement_Air);
+
+    const EMovementMode Mode = GetCharacterMovement()->MovementMode;
+
+    if (Mode == MOVE_Walking || Mode == MOVE_NavWalking)
+    {
+        AbilitySystemComponent->AddLooseGameplayTag(QuartzTags::State_Movement_Grounded);
+    }
+    else if (Mode == MOVE_Falling || Mode == MOVE_Flying)
+    {
+        AbilitySystemComponent->AddLooseGameplayTag(QuartzTags::State_Movement_Air);
     }
 }
 
@@ -51,6 +73,12 @@ void AQuartzCharacter::Tick(float DeltaTime)
 UAbilitySystemComponent* AQuartzCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void AQuartzCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+{
+    Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
+    UpdateMovementStateTags();
 }
 
 

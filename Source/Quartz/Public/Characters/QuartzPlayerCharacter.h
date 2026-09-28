@@ -78,6 +78,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	FName WeaponSheathSocket;
 
+	
+
 protected:
 	// Input Mapping Context (Enhanced Input System)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -113,6 +115,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> WeaponMeshComp;
+
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	float CameraSensitivity = 1.0f;
 
 private:
 	// Spring Arm Component
