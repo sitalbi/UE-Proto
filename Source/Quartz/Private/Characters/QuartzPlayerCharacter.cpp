@@ -61,6 +61,14 @@ void AQuartzPlayerCharacter::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("WeaponMeshComp not found"));
 	}
 
+	WeaponMeshComp->SetStaticMesh(WeaponData->Mesh);
+
+	WeaponMeshComp->AttachToComponent(
+		GetMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		WeaponSheathSocket
+	);
+
 	EquipTag = QuartzTags::State_Weapon_Equipped;
 }
 
@@ -138,6 +146,13 @@ void AQuartzPlayerCharacter::EquipWeapon()
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (!AnimInstance) return;
 
+	const float Speed = GetVelocity().Size2D();
+
+	UAnimMontage* EquipMontage =
+		Speed > 10.f
+		? EquipUpperBodyMontage
+		: EquipFullBodyMontage;
+
 	AnimInstance->Montage_Play(EquipMontage);
 	AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
 }
@@ -208,9 +223,11 @@ void AQuartzPlayerCharacter::AttachWeapon(bool bEquip)
 		return;
 	}
 
+	FName Socket;
+
 	if (!bEquip)
 	{
-
+		Socket = WeaponSheathSocket;
 		AbilitySystemComponent->RemoveLooseGameplayTag(EquipTag);
 		AbilitySystemComponent->RemoveLooseGameplayTag(WeaponData->WeaponTag);
 
@@ -223,7 +240,7 @@ void AQuartzPlayerCharacter::AttachWeapon(bool bEquip)
 	}
 	else
 	{
-
+		Socket = WeaponHandSocket;
 		AbilitySystemComponent->AddLooseGameplayTag(EquipTag);
 		AbilitySystemComponent->AddLooseGameplayTag(WeaponData->WeaponTag);
 
@@ -236,5 +253,13 @@ void AQuartzPlayerCharacter::AttachWeapon(bool bEquip)
 			WeaponAbilityHandles.Add(Handle);
 		}
 	}
+
+	WeaponMeshComp->SetStaticMesh(WeaponData->Mesh);
+
+	WeaponMeshComp->AttachToComponent(
+		GetMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		Socket
+	);
 }
 

@@ -17,6 +17,9 @@ class QUARTZ_API UQuartzWeaponData : public UPrimaryDataAsset
 	
 public:
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TObjectPtr<UStaticMesh> Mesh;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
 

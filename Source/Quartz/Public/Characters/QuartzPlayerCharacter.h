@@ -111,7 +111,10 @@ protected:
 
 	// Equip anim montage
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
-	UAnimMontage* EquipMontage;
+	UAnimMontage* EquipUpperBodyMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Anim")
+	UAnimMontage* EquipFullBodyMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> WeaponMeshComp;
@@ -119,7 +122,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Weapon")
 	float CameraSensitivity = 1.0f;
 
-private:
 	// Spring Arm Component
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArmComp;
@@ -134,6 +136,8 @@ private:
 	UPROPERTY()
 	TArray<FGameplayAbilitySpecHandle> WeaponAbilityHandles;
 
+
+private: 
 	UPROPERTY()
 	FGameplayTag EquipTag;
 

@@ -90,7 +90,12 @@ void UQuartzDash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
     if (Montage)
     {
         // Adjust the montage playrate to the dash duration
-        float SectionLength = Montage->GetSectionLength(DashMontage->GetSectionIndex(SectionName));
+        const int32 SectionIndex = Montage->GetSectionIndex(SectionName);
+        if (SectionIndex == INDEX_NONE || DashDuration <= 0.f)
+        {
+            return;
+        }
+        float SectionLength = Montage->GetSectionLength(SectionIndex);
         float PlayRate = SectionLength / DashDuration;
 
         UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
